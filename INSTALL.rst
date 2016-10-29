@@ -2,6 +2,17 @@
 Installation instructions
 =========================
 
+Debian based distributions::
+----------------------------
+
+To install Pygame on Debian, Ubuntu and Linux Mint, just follow the commands bellow::
+
+	$ wget https://github.com/gutioliveira/FGAme/blob/master/pygame_1.9-1_all.deb
+	$ dpkg -i pygame_1.9-1_all.deb
+
+Other distributions::
+---------------------
+
 FGAme can be installed using pip::
 
     $ python3 -m pip install FGAme
