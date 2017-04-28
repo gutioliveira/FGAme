@@ -3,45 +3,51 @@ from kivy.clock import Clock
 from kivy.uix.relativelayout import RelativeLayout
 
 from FGAme import listen
-from FGAme.input import Input
 from FGAme.kivy_backend import KivyWorld, KivyMainLoop, KivyInput
 
-from queue import Queue
 
 @listen('key-up', 'up')
-def xxx(*args):
+def key_up(*args):
     print('key-up')
 
+
 @listen('key-down', 'down')
-def xxx():
+def key_down():
     print('key-down')
 
+
 @listen('mouse-button-down')
-def k(x,y):
+def mouse_down(x, y):
     print(x)
     print(y)
 
+
 @listen('mouse-button-up')
-def k2(*args):
+def mouse_up(*args):
     print("zeca")
 
+
 @listen('mouse-long-press', 'left')
-def k5(*args):
+def mouse_long_press(*args):
     print(args)
 
+
 @listen('long-press', 'x')
-def k7(*args):
+def long_press(*args):
     print('x')
+
 
 class WorldExample(KivyWorld):
 
     def init_objects(self):
         self.add.circle(20, pos=(100, 110), vel=(300, 0), color='random')
         self.add.aabb(shape=(20, 120), pos=(440, 300), color='random')
-        self.add.rectangle(shape=(20,120), pos=(300,100), color='red')
-        self.add.rectangle(shape=(20,120), pos=(700,100), color='red')
-        self.add.poly([(100,100),(200,100),(200,200),(50,200),(75,125)], vel=(100,100), pos=(400,100), color='random')
+        self.add.rectangle(shape=(20, 120), pos=(300, 100), color='red')
+        self.add.rectangle(shape=(20, 120), pos=(700, 100), color='red')
+        self.add.poly([(100, 100), (200, 100), (200, 200), (50, 200), (75, 125)],
+                      vel=(100, 100), pos=(400, 100), color='random')
         self.add.margin()
+
 
 class FGAmeWidget(RelativeLayout):
     """
@@ -55,7 +61,6 @@ class FGAmeWidget(RelativeLayout):
         self.world.widget = self
         self.world.init_objects()
         Clock.schedule_interval(self.fgame_step, self.mainloop.dt)
-
 
     def fgame_step(self, dt):
         self.mainloop.step(self.world)
