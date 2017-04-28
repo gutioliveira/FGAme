@@ -4,7 +4,8 @@ from FGAme import Circle, AABB, Rectangle as FGAmeRectangle, Poly
 from FGAme.mainloop import MainLoop
 
 from kivy.core.window import Window
-from kivy.graphics import Color, Ellipse, Rectangle, Rotate, PushMatrix, PopMatrix, Translate
+from kivy.graphics import Color, Ellipse
+from kivy.graphics import Rectangle, Rotate, PushMatrix, PopMatrix, Translate
 from kivy.graphics.tesselator import Tesselator
 from kivy.graphics import Mesh
 
@@ -16,22 +17,21 @@ from functools import singledispatch
 
 from queue import Queue
 
+
 class KivyInput(Input):
 
     def __init__(self):
         super(KivyInput, self).__init__()
         self.events = Queue()
-        ## algumas teclas possuem nomes diferentes
+        # algumas teclas possuem nomes diferentes
         self.keys = {v: k for k, v in Window._system_keyboard.keycodes.items()}
         Window.bind(on_key_up=self.add_on_key_up)
         Window.bind(on_key_down=self.add_on_key_down)
         Window.bind(on_touch_down=self.add_on_touch_down)
-        # Window.bind(on_touch_move=self.add_on_touch_move)
         Window.bind(on_touch_up=self.add_on_touch_up)
         self.hold_mouse = True
         self.hold_key = True
 
-    
     def poll(self):
 
         while not self.events.empty():
@@ -67,11 +67,11 @@ class KivyInput(Input):
 
         self.events.put(Event('mouse-button-down', None, args[1].pos))
 
-        if self.hold_mouse == True:
+        if self.hold_mouse:
             import threading
 
             def work():
-                while self.hold_mouse == True:
+                while self.hold_mouse:
                     self.events.put(Event('mouse-long-press', None, args[1].pos))
                     time.sleep(0.1)
 
@@ -83,12 +83,14 @@ class KivyInput(Input):
         self.events.put(Event('mouse-button-up', None, args[1].pos))
         self.hold_mouse = False
 
+
 class Event:
 
     def __init__(self, type, key, pos):
         self.type = type
         self.key = key
         self.pos = pos
+
 
 class KivyObjectWrapper:
     def __init__(self, obj_fgame, obj_kivy, translation=None, rotation=None):
@@ -97,6 +99,7 @@ class KivyObjectWrapper:
         self.translation = translation
         self.rotation = rotation
         self.initial_pos = obj_fgame.pos
+
 
 class KivyWorld(World):
 
@@ -124,12 +127,13 @@ class KivyWorld(World):
 def register_to_canvas(obj, world):
     pass
 
+
 @register_to_canvas.register(Circle)
 def _(obj, world):
     with world.widget.canvas:
         diameter = 2 * obj.radius
         Color(*obj.color.rgbf)
-        kcircle = Ellipse(pos=obj.pos_sw, size=(diameter,diameter))
+        kcircle = Ellipse(pos=obj.pos_sw, size=(diameter, diameter))
         world.objects.append(KivyObjectWrapper(obj, kcircle))
 
 
@@ -137,14 +141,16 @@ def _(obj, world):
 def _(obj, world):
     with world.widget.canvas:
         Color(*obj.color.rgbf)
-        krectangle = Rectangle(pos=obj.pos_sw,size=(obj.xmax-obj.xmin,obj.ymax-obj.ymin))
+        x, y = obj.xmax-obj.xmin, obj.ymax-obj.ymin
+        krectangle = Rectangle(pos=obj.pos_sw, size=(x, y))
         world.objects.append(KivyObjectWrapper(obj, krectangle))
+
 
 @register_to_canvas.register(Poly)
 def _(obj, world):
     tess = Tesselator()
     vertices = []
-    for x,y in obj.vertices:
+    for x, y in obj.vertices:
         vertices.append(x)
         vertices.append(y)
     tess.add_contour(vertices)
@@ -153,23 +159,26 @@ def _(obj, world):
     with world.widget.canvas:
         Color(*obj.color.rgbf)
         PushMatrix()
-        translation = Translate(0,0)
+        translation = Translate(0, 0)
         rotation = Rotate(axis=(0, 0, 1), origin=(obj.pos.x, obj.pos.y, 0))
         for vertices, indices in tess.meshes:
-            Mesh(vertices=vertices,indices=indices,mode="triangle_fan")
+            Mesh(vertices=vertices, indices=indices, mode="triangle_fan")
         PopMatrix()
         world.objects.append(KivyObjectWrapper(obj, tess, translation, rotation))
+
 
 @register_to_canvas.register(FGAmeRectangle)
 def _(obj, world):
     with world.widget.canvas:
         PushMatrix()
-        translation = Translate(0,0)             
+        translation = Translate(0, 0)
         rotation = Rotate(axis=(0, 0, 1), origin=(obj.pos.x, obj.pos.y, 0))
         Color(*obj.color.rgbf)
-        krectangle = Rectangle(pos=obj.pos_sw, size=(obj.xmax-obj.xmin,obj.ymax-obj.ymin))
+        x, y = obj.xmax-obj.xmin, obj.ymax-obj.ymin
+        krectangle = Rectangle(pos=obj.pos_sw, size=(x, y))
         PopMatrix()
         world.objects.append(KivyObjectWrapper(obj, krectangle, translation, rotation))
+
 
 class KivyMainLoop(MainLoop):
 
