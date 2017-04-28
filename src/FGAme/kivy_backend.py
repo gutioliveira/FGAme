@@ -72,7 +72,11 @@ class KivyInput(Input):
 
             def work():
                 while self.hold_mouse:
-                    self.events.put(Event('mouse-long-press', None, args[1].pos))
+                    self.events.put(
+                        Event(
+                            'mouse-long-press',
+                            None,
+                            args[1].pos))
                     time.sleep(0.1)
 
             t = threading.Thread(target=work)
@@ -115,7 +119,8 @@ class KivyWorld(World):
     def update(self, dt):
         super().update(dt)
         for obj in self.objects:
-            if isinstance(obj.obj_fgame, FGAmeRectangle) or isinstance(obj.obj_fgame, Poly):
+            if isinstance(obj.obj_fgame, FGAmeRectangle) or isinstance(
+                    obj.obj_fgame, Poly):
                 obj.translation.x = obj.obj_fgame.pos.x - obj.initial_pos.x
                 obj.translation.y = obj.obj_fgame.pos.y - obj.initial_pos.y
                 obj.rotation.angle = obj.obj_fgame.theta * 180.0 / pi
@@ -141,7 +146,7 @@ def _(obj, world):
 def _(obj, world):
     with world.widget.canvas:
         Color(*obj.color.rgbf)
-        x, y = obj.xmax-obj.xmin, obj.ymax-obj.ymin
+        x, y = obj.xmax - obj.xmin, obj.ymax - obj.ymin
         krectangle = Rectangle(pos=obj.pos_sw, size=(x, y))
         world.objects.append(KivyObjectWrapper(obj, krectangle))
 
@@ -164,7 +169,12 @@ def _(obj, world):
         for vertices, indices in tess.meshes:
             Mesh(vertices=vertices, indices=indices, mode="triangle_fan")
         PopMatrix()
-        world.objects.append(KivyObjectWrapper(obj, tess, translation, rotation))
+        world.objects.append(
+            KivyObjectWrapper(
+                obj,
+                tess,
+                translation,
+                rotation))
 
 
 @register_to_canvas.register(FGAmeRectangle)
@@ -174,10 +184,15 @@ def _(obj, world):
         translation = Translate(0, 0)
         rotation = Rotate(axis=(0, 0, 1), origin=(obj.pos.x, obj.pos.y, 0))
         Color(*obj.color.rgbf)
-        x, y = obj.xmax-obj.xmin, obj.ymax-obj.ymin
+        x, y = obj.xmax - obj.xmin, obj.ymax - obj.ymin
         krectangle = Rectangle(pos=obj.pos_sw, size=(x, y))
         PopMatrix()
-        world.objects.append(KivyObjectWrapper(obj, krectangle, translation, rotation))
+        world.objects.append(
+            KivyObjectWrapper(
+                obj,
+                krectangle,
+                translation,
+                rotation))
 
 
 class KivyMainLoop(MainLoop):
