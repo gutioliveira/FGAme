@@ -150,7 +150,7 @@ class MainLoop:
             self.n_skip += 1
             frame_skip_signal.trigger(-wait)
         elif wait:
-            time.sleep(self.sleep_time)
+            self.sleep(self.sleep_time)
 
         self.time += self.dt
         self.n_iter += 1
@@ -172,6 +172,9 @@ class MainLoop:
         """
 
         self._running = False
+
+    def sleep(self, dt):
+        time.sleep(dt)
 
     def schedule(self, time, function=None, args=None, kwargs=None,
                  **passed_kwargs):

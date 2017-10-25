@@ -182,7 +182,7 @@ class World(Listener, collections.MutableSequence):
         """
 
         conf.init()
-        conf.show_screen()
+        conf.show_screen(self)
         self._mainloop.run(self, timeout=timeout, **kwds)
 
     def start(self, **kwds):

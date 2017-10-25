@@ -61,7 +61,7 @@ class Configuration:
     _window_origin = (0, 0)
     _window_shape = None
     _backend = None
-    _backends = ['pygame', 'pygamegfx', 'sdl2', 'sdl2cffi']
+    _backends = ['pygame','kivy', 'pygamegfx', 'sdl2', 'sdl2cffi']
     _backend_classes = None
     _set_screen = _setter_factory('_screen_object')
     _set_input = _setter_factory('_input_object')
@@ -332,14 +332,14 @@ class Configuration:
 
         return self._physics_dt
 
-    def show_screen(self):
+    def show_screen(self, world):
         """
         Display the main screen.
         """
 
         screen = self._screen_object or self.init_screen()
         if not screen.visible:
-            screen.show()
+            screen.show(world)
 
 
 # Global configuration object

@@ -20,7 +20,7 @@ class PyGameCanvas(Canvas):
     _pg_draw_poly = pygame.draw.polygon
     _pg_segment = pygame.draw.line
 
-    def show(self):
+    def show(self, world):
         self._screen = pygame.display.set_mode((self.width, self.height))
         super(PyGameCanvas, self).show()
 
