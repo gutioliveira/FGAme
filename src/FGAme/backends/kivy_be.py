@@ -7,8 +7,8 @@ from FGAme.screen import Canvas
 from FGAme.input import Input
 from FGAme.mainloop import MainLoop
 from FGAme import conf
+from FGAme.objects import Body
 
-from kivy.core.window import Window
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.relativelayout import RelativeLayout
@@ -23,7 +23,7 @@ from math import pi
 #
 # Module constants
 #
-HAS_INIT_SDL_VIDEO = False
+kivy_world = None
 
 
 class KivyObjectWrapper:
@@ -37,13 +37,17 @@ class KivyObjectWrapper:
 
 class KivyWorld(World):
 
-    def __init__(self):
+    def __init__(self, world):
         super().__init__()
+        self.gravity = world.gravity
         self.objects = []
         self.widget = FGAmeWidget(self)
+        self.app = None
 
     def _add(self, obj, layer=0):
-        super()._add(obj, layer)
+        if isinstance(obj, Body):
+            self._simulation.add(obj)
+            obj.world = self
         register_to_canvas(obj, self)
 
     def update(self, dt):
@@ -68,7 +72,6 @@ def _(obj, world):
         diameter = 2 * obj.radius
         Color(*obj.color.rgbf)
         kcircle = Ellipse(pos=obj.pos_sw, size=(diameter, diameter))
-        print(world)
         world.objects.append(KivyObjectWrapper(obj, kcircle))
 
 
@@ -83,6 +86,7 @@ def _(obj, world):
 
 @register_to_canvas.register(Poly)
 def _(obj, world):
+    kivy_obj = None
     tess = Tesselator()
     vertices = []
     for x, y in obj.vertices:
@@ -97,10 +101,10 @@ def _(obj, world):
         translation = Translate(0, 0)
         rotation = Rotate(axis=(0, 0, 1), origin=(obj.pos.x, obj.pos.y, 0))
         for vertices, indices in tess.meshes:
-            Mesh(vertices=vertices, indices=indices, mode="triangle_fan")
+            kivy_obj = Mesh(vertices=vertices, indices=indices, mode="triangle_fan")
         PopMatrix()
         world.objects.append(KivyObjectWrapper(
-            obj, tess, translation, rotation))
+            obj, kivy_obj, translation, rotation))
 
 
 @register_to_canvas.register(FGAmeRectangle)
@@ -118,15 +122,15 @@ def _(obj, world):
 
 
 class FGAmeWidget(RelativeLayout):
-    """
-    Wraps an FGAme World built with circles.
-    """
 
     def __init__(self, world, fps=60):
         super().__init__()
         self.world = world
         self.mainloop = conf.get_mainloop()
         Clock.schedule_interval(self.fgame_step, self.mainloop.dt)
+        from kivy.core.window import Window
+        Window.clearcolor = (1, 1, 1, 1)
+        Window.size = conf.get_resolution()
 
     def fgame_step(self, dt):
         self.mainloop.step(self.world)
@@ -156,19 +160,23 @@ class KivyCanvas(Canvas):
         pass
 
     def show(self, world):
-        kivy_world = KivyWorld()
+        global kivy_world
+        kivy_world = KivyWorld(world)
         for obj in world._objects:
             kivy_world.add(obj)
-        FGAmeApp(kivy_world, kivy_world.widget).run()
+        kivy_world.app = FGAmeApp(kivy_world, kivy_world.widget)
+        kivy_world.app.run()
 
 
 class KivyInput(Input):
 
     def __init__(self):
+        from kivy.core.window import Window
         super(KivyInput, self).__init__()
         self.events = Queue()
         # some keys have different names
         self.keys = {v: k for k, v in Window._system_keyboard.keycodes.items()}
+        self.keys[32] = 'space'
         Window.bind(on_key_up=self.add_on_key_up)
         Window.bind(on_key_down=self.add_on_key_down)
         Window.bind(on_touch_down=self.add_on_touch_down)
