@@ -98,6 +98,11 @@ class World(Listener, collections.MutableSequence):
         Adds object to the world.
         """
 
+        from FGAme.backends.kivy_be import kivy_world
+
+        if kivy_world is not None:
+            kivy_world.add(obj)
+
         if isinstance(obj, (tuple, list)):
             for obj in obj:
                 self.add(obj, layer=layer)
@@ -132,6 +137,16 @@ class World(Listener, collections.MutableSequence):
         else:
             self._render_tree.remove(obj)
         self._objects.remove(obj)
+
+        from FGAme.backends.kivy_be import kivy_world
+
+        if kivy_world is not None:
+            for o in kivy_world.objects:
+                if o.obj_fgame == obj:
+                    kivy_world.objects.remove(o)
+                    kivy_world._simulation.remove(obj)
+                    kivy_world.widget.canvas.remove(o.obj_kivy)
+                    break
 
     def init(self):
         """
@@ -214,6 +229,11 @@ class World(Listener, collections.MutableSequence):
         except (AttributeError, TimeoutError):
             pass
         self._mainloop.stop()
+
+        from FGAme.backends.kivy_be import kivy_world
+
+        if kivy_world is not None:
+            kivy_world.app.stop()
 
     def render_tree(self):
         """
