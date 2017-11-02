@@ -3,7 +3,7 @@ Re-define os objetos do módulo FGAme.physics e adiciona propriades extras de
 renderização
 """
 
-from PIL import ImageChops
+#from PIL import ImageChops
 from FGAme import conf
 from FGAme import draw
 from FGAme import physics
