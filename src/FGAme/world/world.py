@@ -164,12 +164,22 @@ class World(Listener, collections.MutableSequence):
 
         self.is_paused = True
 
+        from FGAme.backends.kivy_be import kivy_world
+
+        if kivy_world is not None:
+            kivy_world.is_paused = True
+
     def resume(self):
         """
         Resume paused physics simulation.
         """
 
         self.is_paused = False
+
+        from FGAme.backends.kivy_be import kivy_world
+
+        if kivy_world is not None:
+            kivy_world.is_paused = False
 
     def toggle_pause(self):
         """

@@ -53,7 +53,7 @@ class KivyWorld(World):
     def update(self, dt):
         super().update(dt)
         for obj in self.objects:
-            if isinstance(obj.obj_fgame, FGAmeRectangle) or isinstance(obj.obj_fgame, Poly):
+            if not isinstance(obj.obj_fgame, Circle):
                 obj.translation.x = obj.obj_fgame.pos.x - obj.initial_pos.x
                 obj.translation.y = obj.obj_fgame.pos.y - obj.initial_pos.y
                 obj.rotation.angle = obj.obj_fgame.theta * 180.0 / pi
@@ -73,15 +73,6 @@ def _(obj, world):
         Color(*obj.color.rgbf)
         kcircle = Ellipse(pos=obj.pos_sw, size=(diameter, diameter))
         world.objects.append(KivyObjectWrapper(obj, kcircle))
-
-
-@register_to_canvas.register(AABB)
-def _(obj, world):
-    with world.widget.canvas:
-        Color(*obj.color.rgbf)
-        krectangle = Rectangle(
-            pos=obj.pos_sw, size=(obj.xmax-obj.xmin, obj.ymax-obj.ymin))
-        world.objects.append(KivyObjectWrapper(obj, krectangle))
 
 
 @register_to_canvas.register(Poly)
@@ -106,7 +97,7 @@ def _(obj, world):
         world.objects.append(KivyObjectWrapper(
             obj, kivy_obj, translation, rotation))
 
-
+@register_to_canvas.register(AABB)
 @register_to_canvas.register(FGAmeRectangle)
 def _(obj, world):
     with world.widget.canvas:
@@ -165,6 +156,16 @@ class KivyCanvas(Canvas):
         for obj in world._objects:
             kivy_world.add(obj)
         kivy_world.app = FGAmeApp(kivy_world, kivy_world.widget)
+        kivy_world.is_paused = True
+        import threading
+
+        def work():
+            time.sleep(3)
+            kivy_world.is_paused = False
+
+        t = threading.Thread(target=work)
+        t.daemon = True
+        t.start()
         kivy_world.app.run()
 
 
