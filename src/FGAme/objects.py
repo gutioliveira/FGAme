@@ -2,8 +2,12 @@
 Re-define os objetos do módulo FGAme.physics e adiciona propriades extras de
 renderização
 """
-
-#from PIL import ImageChops
+try:
+    from PIL import ImageChops
+except ImportError:
+    from warnings import warn
+    warn('PIL not found. FGAme will not be able to render images and textures')
+    
 from FGAme import conf
 from FGAme import draw
 from FGAme import physics

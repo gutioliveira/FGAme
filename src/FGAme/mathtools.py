@@ -1,7 +1,7 @@
 from math import *
 import smallshapes as shapes
 from smallvectors import *
-
+print(shapes.__path__)
 # Vector type aliases
 Vec2 = Vec[2, float]
 Vec3 = Vec[3, float]

@@ -2,7 +2,7 @@ import pytest
 from FGAme.backends import get_backend_classes
 from FGAme.backends import testing_be
 from FGAme import conf
-
+from FGAme import World
 
 def test_find_correct_backend_classes():
     D = get_backend_classes('testing')
@@ -25,7 +25,8 @@ def test_find_pygame_backend():
     }
 
 def test_show_screen():
-    conf.show_screen()
+    w = World()
+    conf.show_screen(w)
     assert conf._screen_object
 
 def test_set_resolution():
