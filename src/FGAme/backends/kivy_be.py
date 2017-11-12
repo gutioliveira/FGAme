@@ -42,7 +42,11 @@ class KivyWorld(World):
         self.gravity = world.gravity
         self.objects = []
         self.widget = FGAmeWidget(self)
-        self.app = None
+        self.app = FGAmeApp(self, self.widget)
+        self.is_paused = True
+        self._simulation = world._simulation
+        for obj in world._objects:
+            self.add(obj)
 
     def _add(self, obj, layer=0):
         if isinstance(obj, Body):
@@ -153,10 +157,6 @@ class KivyCanvas(Canvas):
     def show(self, world):
         global kivy_world
         kivy_world = KivyWorld(world)
-        for obj in world._objects:
-            kivy_world.add(obj)
-        kivy_world.app = FGAmeApp(kivy_world, kivy_world.widget)
-        kivy_world.is_paused = True
         import threading
 
         def work():
