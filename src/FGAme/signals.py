@@ -93,6 +93,8 @@ class Handler:
                 kwargs[name] = arg
             for name, value in self.filters.items():
                 if kwargs.get(name, value) != value:
+                    print(name)
+                    print(value)
                     return False
             return True
         else:

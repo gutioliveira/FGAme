@@ -23,8 +23,7 @@ from math import pi
 #
 # Module constants
 #
-kivy_world = None
-
+from FGAme import listen
 
 class KivyObjectWrapper:
     def __init__(self, obj_fgame, obj_kivy, translation=None, rotation=None):
@@ -44,7 +43,6 @@ class KivyWorld(World):
         self.widget = FGAmeWidget(self)
         self.app = FGAmeApp(self, self.widget)
         self.is_paused = True
-        self._simulation = world._simulation
         for obj in world._objects:
             self.add(obj)
 
@@ -63,6 +61,27 @@ class KivyWorld(World):
                 obj.rotation.angle = obj.obj_fgame.theta * 180.0 / pi
             else:
                 obj.obj_kivy.pos = obj.obj_fgame.pos_sw
+
+    @listen('add-object')
+    def add_object_kivy_world(self, obj, layer):
+        self.add(obj, layer)
+
+    @listen('remove-object')
+    def remove_object_kivy_world(self, obj):
+        for o in self.objects:
+            if o.obj_fgame == obj:
+                self.objects.remove(o)
+                self._simulation.remove(obj)
+                self.widget.canvas.remove(o.obj_kivy)
+                break
+
+    @listen('stop-simulation')
+    def stop_simulation(self):
+        self.app.stop()
+
+    @listen('pause-simulation')
+    def stop_simulation(self, is_paused):
+        self.is_paused = is_paused
 
 
 @singledispatch
@@ -155,7 +174,6 @@ class KivyCanvas(Canvas):
         pass
 
     def show(self, world):
-        global kivy_world
         kivy_world = KivyWorld(world)
         import threading
 

@@ -2,6 +2,7 @@ from random import uniform
 
 from FGAme import *
 
+conf.set_backend('kivy')
 
 class Flappy(Poly):
     """
@@ -68,6 +69,13 @@ class Game(World):
         # Flappy triangle
         self.flappy = Flappy()
         self.add(self.flappy)
+
+    @listen('key-down', 'b')
+    def pauses(self):
+        if not self.is_paused:
+            self.pause()
+        else:
+            self.resume()
 
     def new_obstacle(self, pos_x):
         """

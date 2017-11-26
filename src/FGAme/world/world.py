@@ -13,6 +13,15 @@ from FGAme.utils import lazy
 from FGAme.world.factory import ObjectFactory
 from FGAme.world.tracker import Tracker
 
+from FGAme.signals import global_signal
+
+add_object_signal = global_signal('add-object',['layer'])
+remove_object_signal = global_signal('remove-object')
+stop_simulation_signal = global_signal('stop-simulation')
+pause_simulation_signal = global_signal('pause-simulation')
+
+kivy_test_signal = global_signal('kivy')
+
 
 class World(Listener, collections.MutableSequence):
     """
@@ -98,10 +107,8 @@ class World(Listener, collections.MutableSequence):
         Adds object to the world.
         """
 
-        from FGAme.backends.kivy_be import kivy_world
-
-        if kivy_world is not None:
-            kivy_world.add(obj)
+        if conf.get_backend() == 'kivy':
+            add_object_signal.trigger(obj=obj, layer=layer)
 
         if isinstance(obj, (tuple, list)):
             for obj in obj:
@@ -138,15 +145,8 @@ class World(Listener, collections.MutableSequence):
             self._render_tree.remove(obj)
         self._objects.remove(obj)
 
-        from FGAme.backends.kivy_be import kivy_world
-
-        if kivy_world is not None:
-            for o in kivy_world.objects:
-                if o.obj_fgame == obj:
-                    kivy_world.objects.remove(o)
-                    kivy_world._simulation.remove(obj)
-                    kivy_world.widget.canvas.remove(o.obj_kivy)
-                    break
+        if conf.get_backend() == 'kivy':
+            remove_object_signal.trigger(obj)
 
     def init(self):
         """
@@ -164,10 +164,8 @@ class World(Listener, collections.MutableSequence):
 
         self.is_paused = True
 
-        from FGAme.backends.kivy_be import kivy_world
-
-        if kivy_world is not None:
-            kivy_world.is_paused = True
+        if conf.get_backend() == 'kivy':
+            pause_simulation_signal.trigger(self.is_paused)
 
     def resume(self):
         """
@@ -176,10 +174,8 @@ class World(Listener, collections.MutableSequence):
 
         self.is_paused = False
 
-        from FGAme.backends.kivy_be import kivy_world
-
-        if kivy_world is not None:
-            kivy_world.is_paused = False
+        if conf.get_backend() == 'kivy':
+            pause_simulation_signal.trigger(self.is_paused)
 
     def toggle_pause(self):
         """
@@ -187,6 +183,9 @@ class World(Listener, collections.MutableSequence):
         """
 
         self.is_paused = not self.is_paused
+
+        if conf.get_backend() == 'kivy':
+            pause_simulation_signal.trigger(self.is_paused)
 
     def update(self, dt):
         """
@@ -240,10 +239,8 @@ class World(Listener, collections.MutableSequence):
             pass
         self._mainloop.stop()
 
-        from FGAme.backends.kivy_be import kivy_world
-
-        if kivy_world is not None:
-            kivy_world.app.stop()
+        if conf.get_backend() == 'kivy':
+            stop_simulation_signal.trigger()
 
     def render_tree(self):
         """
