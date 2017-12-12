@@ -9,6 +9,7 @@ from FGAme.mainloop import MainLoop
 from FGAme import conf
 from FGAme.objects import Body
 
+from kivy.core.window import Window
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.uix.relativelayout import RelativeLayout
@@ -20,10 +21,44 @@ from kivy.graphics import Mesh
 from functools import singledispatch
 from queue import Queue
 from math import pi
-#
-# Module constants
-#
+
+from FGAme.signals import global_signal
 from FGAme import listen
+
+@listen('create-world')
+def add_widget_to_world(world):
+    world.widget = FGAmeWidget(world)
+    world.objects = []
+
+@listen('add-object')
+def add_object_to_world(world, obj):
+    register_to_canvas(obj, world)
+
+@listen('remove-object')
+def remove_object_kivy_world(world, obj):
+    for o in world.objects:
+        if o.obj_fgame == obj:
+            world.objects.remove(o)
+            world.widget.canvas.remove(o.obj_kivy)
+            break
+
+@listen('update-simulation')
+def update_simulation(world, dt):
+    for obj in world.objects:
+        if not isinstance(obj.obj_fgame, Circle):
+            obj.translation.x = obj.obj_fgame.pos.x - obj.initial_pos.x
+            obj.translation.y = obj.obj_fgame.pos.y - obj.initial_pos.y
+            obj.rotation.angle = obj.obj_fgame.theta * 180.0 / pi
+        else:
+            obj.obj_kivy.pos = obj.obj_fgame.pos_sw
+
+@listen('stop-simulation')
+def stop_simulation(world):
+    world.app.stop()
+
+@listen('pause-simulation')
+def stop_simulation(self, is_paused):
+    self.is_paused = is_paused
 
 class KivyObjectWrapper:
     def __init__(self, obj_fgame, obj_kivy, translation=None, rotation=None):
@@ -32,56 +67,6 @@ class KivyObjectWrapper:
         self.translation = translation
         self.rotation = rotation
         self.initial_pos = obj_fgame.pos
-
-
-class KivyWorld(World):
-
-    def __init__(self, world):
-        super().__init__()
-        self.gravity = world.gravity
-        self.objects = []
-        self.widget = FGAmeWidget(self)
-        self.app = FGAmeApp(self, self.widget)
-        self.is_paused = True
-        for obj in world._objects:
-            self.add(obj)
-
-    def _add(self, obj, layer=0):
-        if isinstance(obj, Body):
-            self._simulation.add(obj)
-            obj.world = self
-        register_to_canvas(obj, self)
-
-    def update(self, dt):
-        super().update(dt)
-        for obj in self.objects:
-            if not isinstance(obj.obj_fgame, Circle):
-                obj.translation.x = obj.obj_fgame.pos.x - obj.initial_pos.x
-                obj.translation.y = obj.obj_fgame.pos.y - obj.initial_pos.y
-                obj.rotation.angle = obj.obj_fgame.theta * 180.0 / pi
-            else:
-                obj.obj_kivy.pos = obj.obj_fgame.pos_sw
-
-    @listen('add-object')
-    def add_object_kivy_world(self, obj, layer):
-        self.add(obj, layer)
-
-    @listen('remove-object')
-    def remove_object_kivy_world(self, obj):
-        for o in self.objects:
-            if o.obj_fgame == obj:
-                self.objects.remove(o)
-                self._simulation.remove(obj)
-                self.widget.canvas.remove(o.obj_kivy)
-                break
-
-    @listen('stop-simulation')
-    def stop_simulation(self):
-        self.app.stop()
-
-    @listen('pause-simulation')
-    def stop_simulation(self, is_paused):
-        self.is_paused = is_paused
 
 
 @singledispatch
@@ -142,7 +127,6 @@ class FGAmeWidget(RelativeLayout):
         self.world = world
         self.mainloop = conf.get_mainloop()
         Clock.schedule_interval(self.fgame_step, self.mainloop.dt)
-        from kivy.core.window import Window
         Window.clearcolor = (1, 1, 1, 1)
         Window.size = conf.get_resolution()
 
@@ -155,15 +139,18 @@ class FGAmeApp(App):
     Kivy App that runs FGAme simulation.
     """
 
-    def __init__(self, world, widget=None):
+    def __init__(self, world, widget):
         super().__init__()
         self.world = world
         self.widget = widget
+        world.app = self
+        Window.bind(on_close=self.on_close)
 
     def build(self):
-        if self.widget is None:
-            self.widget = FGAmeWidget(self.world)
         return self.widget
+
+    def on_close(self, *args):
+        self.world.stop()
 
 
 class KivyCanvas(Canvas):
@@ -174,23 +161,24 @@ class KivyCanvas(Canvas):
         pass
 
     def show(self, world):
-        kivy_world = KivyWorld(world)
+        app = FGAmeApp(world, world.widget)
+        # kivy_world = KivyWorld(world)
         import threading
+        world.is_paused = True
 
         def work():
             time.sleep(3)
-            kivy_world.is_paused = False
+            world.is_paused = False
 
         t = threading.Thread(target=work)
         t.daemon = True
         t.start()
-        kivy_world.app.run()
+        app.run()
 
 
 class KivyInput(Input):
 
     def __init__(self):
-        from kivy.core.window import Window
         super(KivyInput, self).__init__()
         self.events = Queue()
         # some keys have different names
